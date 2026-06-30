@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 import { useBusiness } from "@/hooks/use-business";
 import { toast } from "sonner";
-import { Upload, Palette, Clock, User, Building2 } from "lucide-react";
+import { Upload, Palette, Clock, User, Building2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const THEMES = [
@@ -27,8 +27,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState("default");
   const [savingTheme, setSavingTheme] = useState(false);
-  const [dailyRunTime, setDailyRunTime] = useState("09:00");
-  const [savingTime, setSavingTime] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -37,7 +35,6 @@ export default function SettingsPage() {
     if (business) {
       const b = business as unknown as Record<string, unknown>;
       setSelectedTheme((b.theme as string) || "default");
-      setDailyRunTime((b.daily_run_time as string) || "09:00");
       setLogoUrl((b.logo_url as string) || null);
     }
   }, [business]);
@@ -66,19 +63,6 @@ export default function SettingsPage() {
     setSavingTheme(false);
     if (res.ok) { toast.success("Theme saved!"); refetch(); }
     else toast.error("Failed to save theme");
-  }
-
-  async function saveDailyRunTime() {
-    if (!business?.id) return;
-    setSavingTime(true);
-    const res = await fetch("/api/business", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: business.id, daily_run_time: dailyRunTime }),
-    });
-    setSavingTime(false);
-    if (res.ok) { toast.success("Daily run time saved!"); refetch(); }
-    else toast.error("Failed to save");
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -210,28 +194,16 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Clock className="h-4 w-4" />Daily Auto-Run</CardTitle>
             <CardDescription>
-              CEO Agent will automatically analyze your business every day at this time (IST).
-              Requires Vercel Cron to be configured.
+              The CEO Agent automatically analyzes every business once a day.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-end gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dailyRunTime">Run Time (IST 24-hour)</Label>
-                <Input
-                  id="dailyRunTime"
-                  type="time"
-                  value={dailyRunTime}
-                  onChange={(e) => setDailyRunTime(e.target.value)}
-                  className="w-36"
-                />
-              </div>
-              <Button onClick={saveDailyRunTime} disabled={savingTime || !business}>
-                {savingTime ? "Saving..." : "Save Time"}
-              </Button>
+          <CardContent>
+            <div className="flex items-center gap-2 rounded-lg border p-3 text-sm">
+              <Check className="h-4 w-4 text-green-600" />
+              <span>Runs daily at <strong>9:00 AM IST</strong> for all businesses</span>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Current setting: {dailyRunTime} IST daily
+            <p className="mt-3 text-xs text-muted-foreground">
+              Need an analysis right now instead of waiting? Use &quot;Run Now&quot; on the CEO Agent page.
             </p>
           </CardContent>
         </Card>
