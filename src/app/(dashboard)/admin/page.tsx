@@ -4,6 +4,11 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// Needs live cookies/auth and a live DB call on every request — never prerender
+// this at build time (and missing env vars at build time would otherwise fail
+// the whole deployment, not just this page).
+export const dynamic = "force-dynamic";
+
 const ADMIN_EMAIL = "socialsprouts1@gmail.com";
 
 interface WebsiteRequest {
