@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CheckCircle2, XCircle, Loader2, Clock, Ban } from "lucide-react";
 import type { Task } from "@/types/database";
 import { formatRelativeTime } from "@/lib/utils";
 import { toast } from "sonner";
+import { useState } from "react";
 
 const priorityVariant: Record<string, "destructive" | "warning" | "secondary" | "outline"> = {
   urgent: "destructive",
@@ -15,26 +16,69 @@ const priorityVariant: Record<string, "destructive" | "warning" | "secondary" | 
   low: "outline",
 };
 
-const statusVariant: Record<string, "success" | "warning" | "secondary" | "outline" | "destructive"> = {
-  pending: "outline",
-  in_progress: "warning",
-  review: "secondary",
-  completed: "success",
-  cancelled: "destructive",
-};
+function StatusIndicator({ status }: { status: string }) {
+  if (status === "in_progress") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <span className="relative flex h-2 w-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+        </span>
+        <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Running</span>
+      </span>
+    );
+  }
+  if (status === "completed") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+        <span className="text-xs font-medium text-green-600 dark:text-green-400">Complete</span>
+      </span>
+    );
+  }
+  if (status === "failed") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <XCircle className="h-3.5 w-3.5 text-red-600" />
+        <span className="text-xs font-medium text-red-600 dark:text-red-400">Failed</span>
+      </span>
+    );
+  }
+  if (status === "cancelled") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <Ban className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground">Cancelled</span>
+      </span>
+    );
+  }
+  if (status === "review") {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
+        <span className="text-xs font-medium text-purple-600 dark:text-purple-400">In Review</span>
+      </span>
+    );
+  }
+  // pending
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-xs font-medium text-muted-foreground">Pending</span>
+    </span>
+  );
+}
 
 interface TaskItemProps {
   task: Task;
   showDepartment?: boolean;
   onApprove?: (taskId: string) => Promise<void>;
   onDecline?: (taskId: string) => Promise<void>;
-  onComplete?: (taskId: string) => Promise<void>;
 }
 
-export function TaskItem({ task, showDepartment = true, onApprove, onDecline, onComplete }: TaskItemProps) {
-  const [acting, setActing] = useState<"approve" | "decline" | "complete" | null>(null);
+export function TaskItem({ task, showDepartment = true, onApprove, onDecline }: TaskItemProps) {
+  const [acting, setActing] = useState<"approve" | "decline" | null>(null);
   const needsApproval = task.requires_approval && task.approved === null && task.status !== "cancelled";
-  const canComplete = task.status === "in_progress" && task.approved === true;
 
   async function handleApprove() {
     if (!onApprove) return;
@@ -50,22 +94,22 @@ export function TaskItem({ task, showDepartment = true, onApprove, onDecline, on
     setActing(null);
   }
 
-  async function handleComplete() {
-    if (!onComplete) return;
-    setActing("complete");
-    await onComplete(task.id);
-    setActing(null);
-  }
+  const isFailed = task.status === "failed";
+  const isCompleted = task.status === "completed";
 
   return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
+    <div className={`flex items-start justify-between gap-4 rounded-lg border p-4 transition-colors ${
+      isFailed ? "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/10" :
+      isCompleted ? "border-green-200 bg-green-50/40 dark:border-green-900 dark:bg-green-950/10" :
+      ""
+    }`}>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{task.title}</p>
           {needsApproval ? (
             <Badge variant="warning">Pending Approval</Badge>
           ) : (
-            <Badge variant={statusVariant[task.status]}>{task.status.replace("_", " ")}</Badge>
+            <StatusIndicator status={task.status} />
           )}
           <Badge variant={priorityVariant[task.priority]}>{task.priority}</Badge>
           {showDepartment && task.department && (
@@ -90,35 +134,22 @@ export function TaskItem({ task, showDepartment = true, onApprove, onDecline, on
         </div>
       </div>
 
-      <div className="flex shrink-0 gap-2">
-        {needsApproval && onApprove && onDecline && (
-          <>
-            <Button size="sm" onClick={handleApprove} disabled={acting !== null}>
-              {acting === "approve" ? "Approving..." : "Approve"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDecline}
-              disabled={acting !== null}
-              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-            >
-              {acting === "decline" ? "Declining..." : "Decline"}
-            </Button>
-          </>
-        )}
-        {canComplete && onComplete && (
+      {needsApproval && onApprove && onDecline && (
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" onClick={handleApprove} disabled={acting !== null}>
+            {acting === "approve" ? "Approving..." : "Approve"}
+          </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={handleComplete}
+            onClick={handleDecline}
             disabled={acting !== null}
-            className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20"
+            className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
           >
-            {acting === "complete" ? "Marking..." : "Mark Complete"}
+            {acting === "decline" ? "Declining..." : "Decline"}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -129,10 +160,9 @@ interface TaskListProps {
   emptyMessage?: string;
   onApprove?: (taskId: string) => Promise<void>;
   onDecline?: (taskId: string) => Promise<void>;
-  onComplete?: (taskId: string) => Promise<void>;
 }
 
-export function TaskList({ tasks, title, emptyMessage = "No tasks found", onApprove, onDecline, onComplete }: TaskListProps) {
+export function TaskList({ tasks, title, emptyMessage = "No tasks found", onApprove, onDecline }: TaskListProps) {
   return (
     <Card>
       {title && (
@@ -151,7 +181,6 @@ export function TaskList({ tasks, title, emptyMessage = "No tasks found", onAppr
                 task={task}
                 onApprove={onApprove}
                 onDecline={onDecline}
-                onComplete={onComplete}
               />
             ))}
           </div>
@@ -188,19 +217,5 @@ export async function declineTask(taskId: string, reason?: string): Promise<bool
     return false;
   }
   toast.success("Task declined.");
-  return true;
-}
-
-export async function completeTask(taskId: string): Promise<boolean> {
-  const res = await fetch(`/api/tasks/${taskId}/complete`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    toast.error(err.error || "Failed to mark task complete");
-    return false;
-  }
-  toast.success("Task marked as completed!");
   return true;
 }

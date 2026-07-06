@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
-import { TaskList, approveTask, declineTask, completeTask } from "@/components/tasks/task-list";
+import { TaskList, approveTask, declineTask } from "@/components/tasks/task-list";
 import { CreateTaskButton } from "@/components/tasks/create-task-modal";
 import { AgentCommand } from "@/components/tasks/agent-command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,6 +43,7 @@ export default function TasksPage() {
   const pending = tasks.filter((t) => t.status === "pending" && !(t.requires_approval && t.approved === null));
   const inProgress = tasks.filter((t) => t.status === "in_progress");
   const completed = tasks.filter((t) => t.status === "completed");
+  const failed = tasks.filter((t) => t.status === "failed");
   const declined = tasks.filter((t) => t.approved === false);
 
   async function handleApprove(taskId: string) {
@@ -52,11 +53,6 @@ export default function TasksPage() {
 
   async function handleDecline(taskId: string) {
     const ok = await declineTask(taskId);
-    if (ok) refetch();
-  }
-
-  async function handleComplete(taskId: string) {
-    const ok = await completeTask(taskId);
     if (ok) refetch();
   }
 
@@ -97,7 +93,15 @@ export default function TasksPage() {
           </TabsTrigger>
           <TabsTrigger value="all">All ({tasks.length})</TabsTrigger>
           <TabsTrigger value="in_progress">Running ({inProgress.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completed.length})</TabsTrigger>
+          <TabsTrigger value="completed">Complete ({completed.length})</TabsTrigger>
+          {failed.length > 0 && (
+            <TabsTrigger value="failed">
+              Failed
+              <Badge variant="destructive" className="ml-2 px-1.5 py-0 text-xs">
+                {failed.length}
+              </Badge>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="declined">Declined ({declined.length})</TabsTrigger>
         </TabsList>
 
@@ -122,7 +126,6 @@ export default function TasksPage() {
             emptyMessage="No tasks yet. Complete Business Setup to generate tasks."
             onApprove={handleApprove}
             onDecline={handleDecline}
-            onComplete={handleComplete}
           />
         </TabsContent>
 
@@ -130,7 +133,6 @@ export default function TasksPage() {
           <TaskList
             tasks={inProgress}
             emptyMessage="No tasks currently running"
-            onComplete={handleComplete}
           />
         </TabsContent>
 
@@ -138,6 +140,13 @@ export default function TasksPage() {
           <TaskList
             tasks={completed}
             emptyMessage="No completed tasks yet"
+          />
+        </TabsContent>
+
+        <TabsContent value="failed" className="mt-6">
+          <TaskList
+            tasks={failed}
+            emptyMessage="No failed tasks"
           />
         </TabsContent>
 
