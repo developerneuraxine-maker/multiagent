@@ -48,8 +48,9 @@ export async function POST(request: Request) {
   }
 
   // Fire n8n auto-builder webhook — non-fatal if it fails
-  try {
-    await fetch("https://developerneuraxine.app.n8n.cloud/webhook/dev-website-request", {
+  const builderWebhook = process.env.WEBSITE_BUILDER_WEBHOOK_URL;
+  if (builderWebhook) try {
+    await fetch(builderWebhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
