@@ -47,6 +47,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Fire n8n auto-builder webhook — non-fatal if it fails
+  try {
+    await fetch("https://developerneuraxine.app.n8n.cloud/webhook/dev-website-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        business_name: company_name,
+        industry: "",
+        services: [services, description].filter(Boolean).join(". "),
+        colors: [colors, style].filter(Boolean).join(", "),
+        phone: "",
+        client_email: customer_email,
+      }),
+    });
+  } catch {
+    // request already saved to DB — webhook failure is non-fatal
+  }
+
   return NextResponse.json({ ok: true }, { status: 201 });
 }
 
