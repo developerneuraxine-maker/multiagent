@@ -101,12 +101,34 @@ export async function POST(request: Request) {
     });
   }
 
-  // Update task status to completed if taskId provided
+  // Update task status (completed or failed) if taskId provided
   if (payload.taskId && typeof payload.taskId === "string") {
+    const isFailed = payload.status === "failed";
+    const taskUpdate: Record<string, unknown> = {
+      status: isFailed ? "failed" : "completed",
+    };
+    if (!isFailed) taskUpdate.completed_at = new Date().toISOString();
+    if (isFailed && payload.error) taskUpdate.output = { error: payload.error };
+
     await supabase
       .from("tasks")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .update(taskUpdate)
       .eq("id", payload.taskId);
+
+    // Fetch task title for the activity log
+    const { data: taskRow } = await supabase
+      .from("tasks")
+      .select("title")
+      .eq("id", payload.taskId)
+      .single();
+
+    await supabase.from("activity_feed").insert({
+      business_id: businessId,
+      action: isFailed
+        ? `Task failed: ${taskRow?.title ?? payload.taskId}`
+        : `Task completed: ${taskRow?.title ?? payload.taskId}`,
+      details: { taskId: payload.taskId, workflow, error: payload.error ?? null },
+    });
   }
 
   return NextResponse.json({ success: true, received: { businessId, workflow } });
