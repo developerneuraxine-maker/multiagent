@@ -64,7 +64,7 @@ export default function LandingPage() {
 
       <section className="container mx-auto px-4 py-24 text-center">
         <Badge className="mb-4" variant="secondary">
-          Powered by Gemini 2.5 Flash
+          Powered by OpenAI GPT-4o
         </Badge>
         <h1 className="mx-auto max-w-4xl text-5xl font-bold tracking-tight sm:text-6xl">
           Your Business, Run by an{" "}

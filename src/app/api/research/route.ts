@@ -23,16 +23,7 @@ async function runAI(prompt: string): Promise<string> {
     }
   }
 
-  // Fallback to Gemini SDK
-  if (process.env.GEMINI_API_KEY) {
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  }
-
-  throw new Error("No AI API key configured. Add OPENAI_API_KEY or GEMINI_API_KEY to .env");
+  throw new Error("OpenAI API key not configured. Add OPENAI_API_KEY to your .env file.");
 }
 
 export async function POST(request: Request) {

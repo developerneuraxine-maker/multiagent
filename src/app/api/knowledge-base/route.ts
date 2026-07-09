@@ -2,66 +2,42 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
 async function extractPdfContent(buffer: Buffer, fileName: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey) return "";
+  if (!process.env.OPENAI_API_KEY) return "";
 
-  // Use Gemini to read PDF (supports PDF natively)
-  if (process.env.GEMINI_API_KEY) {
-    try {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      const base64 = buffer.toString("base64");
-      const result = await model.generateContent({
-        contents: [{
-          role: "user",
-          parts: [
-            { inlineData: { mimeType: "application/pdf", data: base64 } },
-            { text: `Extract all text content from this document "${fileName}". Return the complete text content, preserving important structure like headings, lists, and key data. Be thorough and include everything.` },
-          ],
-        }],
-      });
-
-      return result.response.text();
-    } catch (err) {
-      console.error("[KB] Gemini PDF extraction failed:", err);
-    }
+  try {
+    const base64 = buffer.toString("base64");
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Extract ALL text content from this PDF document called "${fileName}". Return the complete text preserving headings, lists, tables, and all key data. Be thorough — include everything.`,
+              },
+              {
+                type: "image_url",
+                image_url: { url: `data:application/pdf;base64,${base64}` },
+              },
+            ],
+          },
+        ],
+        max_tokens: 4000,
+      }),
+    });
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "";
+  } catch (err) {
+    console.error("[KB] OpenAI PDF extraction failed:", err);
+    return "";
   }
-
-  // Fallback: use OpenAI with base64 — limited support for PDFs via vision
-  if (process.env.OPENAI_API_KEY) {
-    try {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: `This is a business document called "${fileName}". Extract all important information and content from it and return the full text. Include all data, headings, lists, and key information.`,
-                },
-              ],
-            },
-          ],
-          max_tokens: 4000,
-        }),
-      });
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content || "";
-    } catch (err) {
-      console.error("[KB] OpenAI extraction failed:", err);
-    }
-  }
-
-  return "";
 }
 
 export async function POST(request: Request) {
@@ -111,7 +87,7 @@ export async function POST(request: Request) {
 
   const { data: urlData } = db.storage.from("business-documents").getPublicUrl(path);
 
-  // Extract text content from PDF/DOC using Gemini
+  // Extract text content from PDF using OpenAI
   let extractedContent: string | null = null;
   const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
   if (isPdf) {

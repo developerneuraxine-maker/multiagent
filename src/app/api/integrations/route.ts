@@ -10,9 +10,20 @@ export async function GET(request: Request) {
   const businessId = searchParams.get("businessId");
   if (!businessId) return NextResponse.json({ error: "businessId required" }, { status: 400 });
 
-  const { data } = await supabase
+  // Verify business belongs to user
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("id", businessId)
+    .eq("owner_id", user.id)
+    .single();
+  if (!business) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // Use service client to bypass RLS — ownership already verified above
+  const db = await createServiceClient();
+  const { data } = await db
     .from("integrations")
-    .select("id, business_id, provider, status, metadata, connected_at, created_at")
+    .select("*")
     .eq("business_id", businessId);
 
   return NextResponse.json({ integrations: data || [] });

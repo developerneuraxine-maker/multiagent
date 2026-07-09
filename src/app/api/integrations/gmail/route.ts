@@ -60,6 +60,8 @@ export async function POST(request: Request) {
       business_id: businessId,
       provider: "gmail",
       status: "connected",
+      provider_email: gmailUser,
+      provider_name: gmailUser,
       connected_at: new Date().toISOString(),
       metadata: { gmail_user: gmailUser, gmail_app_password: appPassword },
     }, { onConflict: "business_id,provider" })

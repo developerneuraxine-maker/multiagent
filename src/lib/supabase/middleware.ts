@@ -44,7 +44,12 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/agents") ||
     request.nextUrl.pathname.startsWith("/tasks") ||
     request.nextUrl.pathname.startsWith("/reports") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/knowledge-base") ||
+    request.nextUrl.pathname.startsWith("/integrations") ||
+    request.nextUrl.pathname.startsWith("/suggestions") ||
+    request.nextUrl.pathname.startsWith("/research") ||
+    request.nextUrl.pathname.startsWith("/ceo");
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();

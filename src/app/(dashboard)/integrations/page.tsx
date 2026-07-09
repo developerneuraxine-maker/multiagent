@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBusiness } from "@/hooks/use-business";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
   Plug, Mail, Calendar, Sheet, CreditCard, MessageCircle,
@@ -419,11 +418,13 @@ export default function IntegrationsPage() {
 
   const loadIntegrations = useCallback(async () => {
     if (!business?.id) return;
-    const { data } = await createClient()
-      .from("integrations")
-      .select("*")
-      .eq("business_id", business.id);
-    setIntegrations((data as Integration[]) || []);
+    try {
+      const res = await fetch(`/api/integrations?businessId=${business.id}`);
+      const json = await res.json();
+      setIntegrations((json.integrations as Integration[]) || []);
+    } catch {
+      setIntegrations([]);
+    }
     setLoading(false);
   }, [business?.id]);
 

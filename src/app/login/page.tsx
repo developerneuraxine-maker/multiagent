@@ -32,7 +32,20 @@ export default function LoginPage() {
       }
 
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      // Check if user has already set up a business
+      const supabase2 = createClient();
+      const { data: { user: loggedIn } } = await supabase2.auth.getUser();
+      if (loggedIn) {
+        const { data: biz } = await supabase2
+          .from("businesses")
+          .select("id")
+          .eq("owner_id", loggedIn.id)
+          .limit(1)
+          .maybeSingle();
+        router.push(biz ? "/dashboard" : "/setup");
+      } else {
+        router.push("/setup");
+      }
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");

@@ -216,7 +216,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div className="flex items-center justify-between rounded-lg border p-3">
-              <div><p className="font-medium">OpenAI / Gemini</p><p className="text-muted-foreground text-xs">AI agent engine</p></div>
+              <div><p className="font-medium">OpenAI</p><p className="text-muted-foreground text-xs">AI agent engine (GPT-4o)</p></div>
               <span className="text-green-600 text-xs font-medium">Configured</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">

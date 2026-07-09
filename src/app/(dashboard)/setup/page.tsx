@@ -72,8 +72,8 @@ export default function BusinessSetupPage() {
       return;
     }
 
-    toast.success("Business onboarded! Your AI company is ready.");
-    router.push("/dashboard");
+    toast.success("Business onboarded! Add your documents to the Knowledge Base.");
+    router.push("/knowledge-base");
   }
 
   return (
