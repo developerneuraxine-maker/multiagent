@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Sparkles, MailCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 
 export default function SignupPage() {
-  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -42,13 +41,58 @@ export default function SignupPage() {
         return;
       }
 
-      toast.success("Account created! Setting up your AI company...");
-      router.push("/setup");
-      router.refresh();
+      setConfirmed(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Signup failed");
       setLoading(false);
     }
+  }
+
+  if (confirmed) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <MailCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <CardTitle className="text-2xl">Check your inbox!</CardTitle>
+            <CardDescription className="text-base">
+              We&apos;ve sent a confirmation email to
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="rounded-lg bg-muted px-4 py-2 font-medium text-foreground">
+              {email}
+            </p>
+            <div className="space-y-2 text-sm text-muted-foreground text-left">
+              <p className="font-medium text-foreground">To activate your account:</p>
+              <ol className="list-decimal list-inside space-y-1 leading-relaxed">
+                <li>Open your Gmail (or email app)</li>
+                <li>Look for an email from <strong>AI Business OS</strong></li>
+                <li>Click the <strong>&quot;Confirm your email&quot;</strong> button inside that email</li>
+                <li>Once confirmed, come back here and sign in</li>
+              </ol>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Can&apos;t find the email? Check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+            </p>
+            <Button asChild className="w-full">
+              <Link href="/login">Go to Sign In</Link>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Wrong email?{" "}
+              <button
+                onClick={() => { setConfirmed(false); setLoading(false); setEmail(""); setPassword(""); }}
+                className="text-primary hover:underline"
+              >
+                Sign up again
+              </button>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
