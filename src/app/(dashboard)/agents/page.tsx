@@ -4,7 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Megaphone, TrendingUp } from "lucide-react";
+import {
+  Crown,
+  Megaphone,
+  TrendingUp,
+  Users,
+  DollarSign,
+  Settings2,
+  Code2,
+} from "lucide-react";
 import { useBusiness } from "@/hooks/use-business";
 import { createClient } from "@/lib/supabase/client";
 import type { Task } from "@/types/database";
@@ -26,6 +34,16 @@ const statusVariant: Record<WorkflowStatus, "warning" | "success" | "secondary" 
   Completed: "secondary",
   Idle: "outline",
 };
+
+const AGENTS: { name: string; department: string; icon: React.ElementType }[] = [
+  { name: "CEO Agent",          department: "ceo",         icon: Crown },
+  { name: "Marketing Agent",    department: "marketing",   icon: Megaphone },
+  { name: "Sales Agent",        department: "sales",       icon: TrendingUp },
+  { name: "HR Agent",           department: "hr",          icon: Users },
+  { name: "Finance Agent",      department: "finance",     icon: DollarSign },
+  { name: "Operations Agent",   department: "operations",  icon: Settings2 },
+  { name: "Developer Agent",    department: "developer",   icon: Code2 },
+];
 
 interface DeptAgentCardProps {
   name: string;
@@ -113,8 +131,7 @@ function DeptAgentCard({ name, icon: Icon, tasks }: DeptAgentCardProps) {
 
 export default function AgentsPage() {
   const { business } = useBusiness();
-  const [marketingTasks, setMarketingTasks] = useState<Task[]>([]);
-  const [salesTasks, setSalesTasks] = useState<Task[]>([]);
+  const [tasksByDept, setTasksByDept] = useState<Record<string, Task[]>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchTasks = useCallback(async () => {
@@ -125,12 +142,14 @@ export default function AgentsPage() {
       .from("tasks")
       .select("*")
       .eq("business_id", business.id)
-      .in("department", ["marketing", "sales"])
       .order("created_at", { ascending: false });
 
     const all = (data as Task[]) || [];
-    setMarketingTasks(all.filter((t) => t.department === "marketing"));
-    setSalesTasks(all.filter((t) => t.department === "sales"));
+    const grouped: Record<string, Task[]> = {};
+    for (const agent of AGENTS) {
+      grouped[agent.department] = all.filter((t) => t.department === agent.department);
+    }
+    setTasksByDept(grouped);
     setLoading(false);
   }, [business?.id]);
 
@@ -144,7 +163,7 @@ export default function AgentsPage() {
     <>
       <PageHeader
         title="Agent Dashboard"
-        description="Monitor your AI workflows — approve tasks to start execution"
+        description="Monitor all 7 AI agents — approve tasks to start execution"
         actions={
           <button onClick={fetchTasks} className="text-sm text-primary hover:underline">
             Refresh
@@ -152,17 +171,15 @@ export default function AgentsPage() {
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DeptAgentCard
-          name="Marketing Agent"
-          icon={Megaphone}
-          tasks={marketingTasks}
-        />
-        <DeptAgentCard
-          name="Sales Agent"
-          icon={TrendingUp}
-          tasks={salesTasks}
-        />
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {AGENTS.map((agent) => (
+          <DeptAgentCard
+            key={agent.department}
+            name={agent.name}
+            icon={agent.icon}
+            tasks={tasksByDept[agent.department] ?? []}
+          />
+        ))}
       </div>
 
       <div className="mt-6 rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">

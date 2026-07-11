@@ -8,15 +8,23 @@ import {
   Crown,
   Megaphone,
   TrendingUp,
+  Users,
+  DollarSign,
+  Settings2,
+  Code2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const agents = [
-  { name: "CEO Agent", icon: Crown, desc: "Strategic analysis & delegation" },
-  { name: "Marketing Agent", icon: Megaphone, desc: "Content, campaigns & calendars" },
-  { name: "Sales Agent", icon: TrendingUp, desc: "Leads, outreach & conversions" },
+  { name: "CEO Agent",        icon: Crown,      desc: "Strategic analysis & delegation" },
+  { name: "Marketing Agent",  icon: Megaphone,  desc: "Content, campaigns & calendars" },
+  { name: "Sales Agent",      icon: TrendingUp, desc: "Leads, outreach & conversions" },
+  { name: "HR Agent",         icon: Users,      desc: "Hiring, onboarding & team culture" },
+  { name: "Finance Agent",    icon: DollarSign, desc: "Budgets, forecasts & cost control" },
+  { name: "Operations Agent", icon: Settings2,  desc: "Processes, efficiency & supply chain" },
+  { name: "Developer Agent",  icon: Code2,      desc: "Tech roadmap, bugs & product builds" },
 ];
 
 const features = [
@@ -90,7 +98,7 @@ export default function LandingPage() {
       <section className="border-y bg-muted/30 py-20">
         <div className="container mx-auto px-4">
           <h2 className="mb-12 text-center text-3xl font-bold">Meet Your AI Agents</h2>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {agents.map((agent) => {
               const Icon = agent.icon;
               return (
@@ -99,18 +107,15 @@ export default function LandingPage() {
                     <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle>{agent.name}</CardTitle>
+                    <CardTitle className="text-base">{agent.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{agent.desc}</p>
+                    <p className="text-sm text-muted-foreground">{agent.desc}</p>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
-          <p className="mt-8 text-center text-muted-foreground">
-            Plus HR, Developer, Support, Finance & Operations agents
-          </p>
         </div>
       </section>
 
