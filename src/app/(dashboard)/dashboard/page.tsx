@@ -13,6 +13,10 @@ import {
   DollarSign,
   Lightbulb,
   Brain,
+  Crown,
+  Users,
+  Settings2,
+  Code2,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -24,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useBusiness } from "@/hooks/use-business";
 import { useDashboard } from "@/hooks/use-dashboard";
-import { formatCurrency, formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { Suggestion } from "@/types/database";
 
@@ -137,34 +141,6 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <DollarSign className="h-5 w-5" />
-                Revenue Opportunities
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(stats?.revenue_opportunities || []).length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  Complete business setup to identify revenue opportunities
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {stats?.revenue_opportunities.map((opp) => (
-                    <div key={opp.id} className="flex items-center justify-between rounded-lg border p-3">
-                      <div>
-                        <p className="font-medium">{opp.title}</p>
-                        <p className="text-xs text-muted-foreground">{opp.description}</p>
-                      </div>
-                      <Badge variant="success">{formatCurrency(opp.potential_value)}</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           <ActivityFeed items={activity} agents={agents} />
         </div>
 
@@ -206,18 +182,34 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="mb-3 flex justify-between text-sm">
-                <span className="text-muted-foreground">Active agents</span>
-                <span className="font-medium">{stats?.active_agents}/{stats?.total_agents}</span>
+                <span className="text-muted-foreground">Task completion</span>
+                <span className="font-medium">{stats?.task_completion_pct?.toFixed(0) ?? 0}%</span>
               </div>
-              <Progress value={stats?.total_agents ? ((stats.active_agents / stats.total_agents) * 100) : 0} />
+              <Progress value={stats?.task_completion_pct ?? 0} />
               <div className="mt-4 space-y-2">
-                {agents.slice(0, 5).map((agent) => (
-                  <div key={agent.id} className="flex items-center justify-between text-sm">
-                    <span>{agent.name}</span>
-                    <Badge variant={agent.status === "working" ? "success" : "secondary"}>{agent.status}</Badge>
+                {[
+                  { name: "CEO Agent",        dept: "ceo",        icon: Crown,      count: stats?.ceo_tasks ?? 0 },
+                  { name: "Marketing Agent",  dept: "marketing",  icon: Megaphone,  count: stats?.marketing_tasks ?? 0 },
+                  { name: "Sales Agent",      dept: "sales",      icon: TrendingUp, count: stats?.sales_tasks ?? 0 },
+                  { name: "HR Agent",         dept: "hr",         icon: Users,      count: stats?.hr_tasks ?? 0 },
+                  { name: "Finance Agent",    dept: "finance",    icon: DollarSign, count: stats?.finance_tasks ?? 0 },
+                  { name: "Operations Agent", dept: "operations", icon: Settings2,  count: stats?.operations_tasks ?? 0 },
+                  { name: "Developer Agent",  dept: "developer",  icon: Code2,      count: stats?.developer_tasks ?? 0 },
+                ].map((agent) => (
+                  <div key={agent.dept} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <agent.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>{agent.name}</span>
+                    </div>
+                    <Badge variant={agent.count > 0 ? "secondary" : "outline"}>
+                      {agent.count} {agent.count === 1 ? "task" : "tasks"}
+                    </Badge>
                   </div>
                 ))}
               </div>
+              <a href="/agents" className="mt-4 block text-center text-xs text-primary hover:underline">
+                View all agents →
+              </a>
             </CardContent>
           </Card>
 

@@ -23,6 +23,11 @@ export interface ExtendedDashboardStats {
   completed_tasks: number;
   marketing_tasks: number;
   sales_tasks: number;
+  hr_tasks: number;
+  finance_tasks: number;
+  operations_tasks: number;
+  developer_tasks: number;
+  ceo_tasks: number;
   active_agents: number;
   total_agents: number;
 }
@@ -113,6 +118,11 @@ async function loadDashboard(businessId: string) {
   const completedTasks = tasks.filter((t) => t.status === "completed");
   const marketingTasks = tasks.filter((t) => t.department === "marketing");
   const salesTasks = tasks.filter((t) => t.department === "sales");
+  const hrTasks = tasks.filter((t) => t.department === "hr");
+  const financeTasks = tasks.filter((t) => t.department === "finance");
+  const operationsTasks = tasks.filter((t) => t.department === "operations");
+  const developerTasks = tasks.filter((t) => t.department === "developer");
+  const ceoTasks = tasks.filter((t) => t.department === "ceo");
 
   return {
     stats: {
@@ -126,6 +136,11 @@ async function loadDashboard(businessId: string) {
       completed_tasks: completedTasks.length,
       marketing_tasks: marketingTasks.length,
       sales_tasks: salesTasks.length,
+      hr_tasks: hrTasks.length,
+      finance_tasks: financeTasks.length,
+      operations_tasks: operationsTasks.length,
+      developer_tasks: developerTasks.length,
+      ceo_tasks: ceoTasks.length,
       active_agents: agentsData.filter((a) => a.status === "working").length,
       total_agents: agentsData.length,
     } satisfies ExtendedDashboardStats,
